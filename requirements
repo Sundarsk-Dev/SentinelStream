@@ -1,0 +1,123 @@
+Essential Software (Beyond VS Code & Colab)
+These are the standalone applications or server software you'll need to install and run, often best done via Docker.
+
+Docker & Docker Compose: 🐳
+
+Why: These are the bedrock for local development. They let you run all the complex services (Kafka, Flink, Redis, Postgres, Prometheus, Grafana) in isolated, reproducible containers without messing up your local machine's environment. You'll define your entire local infrastructure in a docker-compose.yaml file.
+
+What to know: How to install Docker Desktop (or Docker Engine on Linux), and basic docker and docker-compose commands (e.g., docker-compose up -d, docker ps, docker logs).
+
+Apache Kafka: 📨
+
+Why: The core messaging queue for real-time data ingestion and alerts.
+
+What to know: Its role as a distributed commit log, topics, producers, and consumers. You'll typically run this via Docker.
+
+Apache ZooKeeper (or KRaft for Kafka): 🐘
+
+Why: Kafka historically used ZooKeeper for distributed coordination. Newer Kafka versions (2.8+) offer KRaft mode, which removes the ZooKeeper dependency.
+
+What to know: If using an older Kafka version, understand that it's a critical dependency for Kafka cluster management. If using a newer version, you might not directly interact with it.
+
+Confluent Schema Registry: 📜
+
+Why: Ensures data consistency and schema evolution for messages in Kafka.
+
+What to know: How it stores Avro/Protobuf schemas and how Kafka producers/consumers interact with it to serialize/deserialize data. Also run via Docker.
+
+Apache Flink: 🌊
+
+Why: The stream processing engine for real-time feature engineering.
+
+What to know: Concepts like data streams, operators, windows, and state management. You'll likely run a Flink standalone cluster (or a single job manager/task manager) via Docker.
+
+Redis: ⚡
+
+Why: A super-fast in-memory data store for caching real-time features.
+
+What to know: Key-value store basics, common commands like GET, SET, HGETALL. Also run via Docker.
+
+PostgreSQL: 🐘
+
+Why: A robust relational database for historical data or lookups if needed.
+
+What to know: Basic SQL queries, tables, and data types. Also run via Docker.
+
+Prometheus: 📈
+
+Why: For collecting and storing operational metrics (latency, throughput, errors) from your services.
+
+What to know: Pull-based monitoring, exporters, and basic PromQL (Prometheus Query Language) for querying metrics. Run via Docker.
+
+Grafana: 📊
+
+Why: For visualizing the metrics collected by Prometheus and creating real-time dashboards for monitoring system health.
+
+What to know: How to create dashboards, add panels, and connect to data sources like Prometheus. Run via Docker.
+
+GeoLite2 Database: 🌍
+
+Why: A free IP-to-geolocation database to enrich transaction data.
+
+What to know: This is a database file (.mmdb) you'll download and integrate into your Flink processing or model serving for IP-based lookups. You'll need to sign up with MaxMind to download it.
+
+Essential Python Libraries (Pip Installable)
+These are what you'll install within your Python virtual environments for different parts of the project.
+
+Core Pipeline & API:
+kafka-python: For interacting with Apache Kafka as a producer and consumer from Python.
+
+confluent-kafka (optional, but often preferred): A more feature-rich and performant Kafka client, especially for Avro integration with Schema Registry.
+
+fastapi: To build your high-performance fraud scoring API.
+
+uvicorn: An ASGI server to run FastAPI applications.
+
+pydantic: Used by FastAPI for data validation and settings management (often installed as a dependency of FastAPI).
+
+redis: Python client for connecting to Redis.
+
+psycopg2-binary (or psycopg): Python adapter for PostgreSQL.
+
+apache-flink (PyFlink): The Python API for Apache Flink, allowing you to write Flink jobs in Python.
+
+Machine Learning & Data Science:
+pandas: For data manipulation and analysis (especially in Colab).
+
+numpy: For numerical operations, fundamental for ML.
+
+scikit-learn: For implementing classical ML models like Logistic Regression, Random Forest, and Isolation Forest.
+
+xgboost: For gradient boosting models (optional, but good for competitive baselines).
+
+imbalanced-learn: For handling imbalanced datasets (e.g., SMOTE for oversampling).
+
+joblib: For simple serialization and deserialization of scikit-learn models.
+
+onnxruntime: If you decide to convert your ML models to ONNX format for faster inference in FastAPI.
+
+shap: For model explainability, providing insights into feature contributions.
+
+torch / tensorflow / dgl / pyg (for PoC GNNs): If you pursue the Graph Neural Network (GNN) R&D feature in Colab, you'll need one of these deep learning frameworks and a graph library.
+
+MLOps & Monitoring:
+mlflow: For experiment tracking and model registry.
+
+dvc: For data version control.
+
+great_expectations: For data quality checks and validation.
+
+evidently: For data and model drift detection.
+
+prometheus_client: If you need to expose custom metrics from your Python services to Prometheus.
+
+requests: For making HTTP requests (e.g., sending alerts to Slack webhooks, interacting with internal APIs).
+
+slack_sdk (or similar for Slack webhooks): For programmatic interaction with Slack.
+
+Development Utilities:
+poetry or pip-tools: Recommended for better dependency management than basic pip.
+
+pytest: For writing and running unit and integration tests.
+
+This list gives you a solid roadmap of what to learn and install. Take them one by one as you encounter them in the implementation plan.
