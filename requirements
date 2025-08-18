@@ -1,122 +1,282 @@
-🚀 SentinelStream – Real-Time Fraud Intelligence System
-✅ Strengths in Your Plan
+SentinelStream — Real-Time Fraud Intelligence: Updated Implementation Plan
+This refined plan prioritizes a phased approach, building from a minimal viable product (MVP) to a fully-featured, production-ready system. This ensures you have a working system at each stage and helps manage complexity.
 
-You already covered end-to-end lifecycle:
+Key Changes Incorporated:
 
-Data ingestion → Stream processing → Feature engineering → ML inference → Monitoring → Alerts.
+Phased Implementation: Explicitly broken down into 5 phases as suggested.
 
-Excellent choice of tools: Kafka + Flink + Redis + FastAPI is a battle-tested combo for real-time ML inference.
+Avro/Protobuf Early: Emphasized early adoption of schema for Kafka.
 
-Inclusion of MLOps tooling (MLflow, DVC, Great Expectations, Evidently AI) shows production-grade thinking.
+Flink/Kafka Streams Choice: Acknowledged Kafka Streams as a potential MVP for stream processing before Flink.
 
-Choice of datasets is smart (Kaggle Fraud → PaySim → synthetic augmentations).
+Redis Usage: Clarified Redis's role primarily for caching rolling aggregates and quick lookups.
 
-📍 Suggested Improvements
+Explainability: Mentioned SHAP/LIME for explainable outputs.
 
-Scope Phasing (MVP → Advanced)
-Don’t start with the full stack at once. Break into phases:
+Phase 1: Ingestion & Basic Pipeline (MVP) 🚀
+Goal: Establish the core data ingestion, a simple rule-based fraud check, and get data flowing end-to-end.
 
-Phase 1 (MVP): Kafka ingestion → Python consumer → simple fraud detection (rule-based).
+Environment Setup (VS Code Focus):
 
-Phase 2: Add ML model serving with FastAPI.
+Install Docker & Docker Compose: Crucial first step on your local machine.
 
-Phase 3: Add Flink for streaming features + Redis cache.
+Install VS Code Extensions: Python, Docker, Apache Kafka, YAML, Remote - Containers.
 
-Phase 4: Add monitoring (Prometheus + Grafana, Evidently AI).
+Create Project Structure: Initialize the sentinelstream/ directory with docker-compose.yaml, src/, data/, notebooks/, etc. as outlined previously. Use poetry or pip-tools for Python dependency management within src/.
 
-Phase 5: Full MLOps integration (MLflow, DVC, Great Expectations).
+Docker Compose Stack (Minimum Local Services):
 
-This way you’ll have a working system at each stage.
+Action: Create docker-compose.yaml to spin up Apache Kafka (with Zookeeper or KRaft) and Confluent Schema Registry. Add a minimal Redis for future use.
 
-Kafka + Schema Registry
-Instead of JSON messages, use Avro/Protobuf early on → ensures strict typing and forward/backward compatibility.
+Test: docker-compose up -d and verify containers are running.
 
-Stream Processing Choice
+Schema Definition (Avro/Protobuf):
 
-Flink is powerful, but complex to deploy.
+Action: Define Avro/Protobuf schemas for your transactions data in src/stream_ingestion/schemas/transaction.avsc (or .proto).
 
-If you’re new, start with Kafka Streams (in Python via Faust or Java), then migrate to Flink later.
+Rationale: Using Avro/Protobuf from the start ensures strict typing and future compatibility.
 
-Confluent provides ksqlDB (SQL-like Kafka queries) → great for prototyping fraud rules fast.
+Stream Ingestion (src/stream_ingestion/producer.py):
 
-Redis Placement
-Redis should be used mainly for:
+Action: Write a Python script to read from PaySim/Kaggle ULB (local data/raw/).
 
-Caching rolling aggregates (e.g., last 5 transactions by user).
+Activity: Serialize data using the defined Avro/Protobuf schema (interacting with Schema Registry) and publish records to the transactions Kafka topic with simulated delays.
 
-Quick lookups during FastAPI inference (geo-IP, velocity checks).
-But don’t overuse it — Flink can handle most feature calculations.
+Test: Run the producer and verify messages appear in Kafka using a consumer.
 
-Explainability & Alerts
-Fraud systems need why a transaction was flagged. Add:
+Basic Rule-Based Fraud Detection (src/rule_engine/simple_consumer.py):
 
-SHAP/LIME for explainable ML outputs.
+Action: Create a Python script acting as a Kafka consumer.
 
-Alerts via Kafka → Slack/email integration.
+Activity: Consume from transactions topic, deserialize messages. Implement a simple rule (e.g., if amount > $10,000 or user_id in known_bad_list).
 
-🛠️ Final Tech Stack (Refined)
+Output: Log suspicious transactions to the console or a local file. This serves as your initial "fraud detection."
 
-Ingestion: Kafka + Schema Registry (Avro/Protobuf).
+Test: Verify suspicious transactions are identified and logged.
 
-Stream Processing: Flink (or Kafka Streams as MVP).
+Phase 2: ML Model Serving ✨
+Goal: Integrate a trained Machine Learning model for fraud scoring via a real-time API.
 
-Features & State: Redis (fast cache), Postgres (historical).
+Model Training (Colab Focus: notebooks/training/01_baseline_training.ipynb):
 
-Model Serving: FastAPI + Docker.
+Action: Load Kaggle ULB dataset.
 
-Monitoring: Prometheus + Grafana + Evidently AI.
+Activity: Train a Logistic Regression and/or Random Forest classifier. Focus on metrics like AUPRC. Use imbalanced-learn for handling class imbalance.
 
-MLOps: MLflow (experiments + registry), DVC (data versioning), Great Expectations (data quality).
+Serialization: Serialize the trained model using joblib (or convert to ONNX if you want to optimize for serving speed early). Save the model to src/model_serving/models/.
 
-Enrichment: MaxMind GeoLite2.
+FastAPI Model Serving API (src/model_serving/api.py):
 
-📊 Suggested Project Roadmap
-🔹 Phase 1: Ingestion & Basic Pipeline
+Action: Create a FastAPI application.
 
-Simulate transactions (PaySim/Kaggle) → produce to Kafka.
+Activity:
 
-Consume with Python → log to console.
+Load the pre-trained model at startup.
 
-Add rule-based fraud checks (e.g., > $10,000 = suspicious).
+Expose a /score endpoint that accepts transaction details.
 
-🔹 Phase 2: ML Model Serving
+Perform direct inference using the received data (no real-time features from Redis/Flink yet, use raw data or simple derived features for now).
 
-Train baseline model (scikit-learn, XGBoost).
+Return the fraud score.
 
-Wrap in FastAPI → Dockerize.
+Containerization: Create a Dockerfile for this FastAPI service and add it to your docker-compose.yaml.
 
-Consumer sends transactions to API → returns fraud score.
+Integrate Consumer with API (src/rule_engine/consumer_with_api.py):
 
-🔹 Phase 3: Real-Time Features
+Action: Modify your Phase 1 Python consumer.
 
-Add Flink for rolling aggregates (transaction velocity, amount per user).
+Activity: Instead of just rule-based checks, send each transaction (or a sample) as a request to your local FastAPI /score endpoint. Log the returned fraud score.
 
-Store features in Redis → API reads features → model inference.
+Test: Send simulated transactions, observe scores from the API in your consumer logs.
 
-🔹 Phase 4: Monitoring & Alerts
+Phase 3: Real-Time Features ⚡
+Goal: Implement real-time feature computation using Flink and leverage Redis for caching.
 
-Prometheus collects metrics (latency, throughput, fraud %).
+MaxMind GeoLite2 Integration:
 
-Grafana dashboard → visualize fraud spikes.
+Action: Download the GeoLite2 database.
 
-Kafka alert topic → send Slack alerts.
+Activity: Develop a simple script to load relevant IP-to-geo mappings into Redis (or store the .mmdb file for direct lookup in Flink/Python).
 
-🔹 Phase 5: Full MLOps
+Stream Processing & Enrichment (PyFlink Job: src/stream_processing/flink_job.py):
 
-Track model experiments in MLflow.
+Action: Write an Apache Flink (PyFlink) job.
 
-Use DVC for dataset versioning.
+Activity:
 
-Great Expectations for schema validation.
+Consume from the transactions Kafka topic.
 
-Evidently AI for drift detection.
+Feature Computation: Implement in-flight features like:
 
-🎯 End Result
+Velocity Features: Rolling averages of amount/count per user_id, merchant, IP/device (e.g., last 5 min, 1 hour).
 
-You’ll have:
+Geo/IP Anomalies: Perform lookups against GeoLite2 data (from Redis or a Flink lookup table).
 
-A real-time fraud detection system capable of ingesting thousands of transactions per second.
+Hour-of-day, etc.
 
-A production-ready ML pipeline with monitoring and MLOps.
+State Management: Use Flink's internal state (RocksDB) for efficient windowing.
 
-A portfolio project that proves you can work at the level of an SDE / ML Engineer in fintech.
+Feature Output: Push computed and enriched features to Redis, keyed by transaction ID or user ID for fast lookup.
+
+Containerization: Add the Flink service to your docker-compose.yaml.
+
+Test: Deploy the Flink job and verify features are correctly written to Redis.
+
+Update Model Serving API (src/model_serving/api.py):
+
+Action: Modify the FastAPI service.
+
+Activity: When a /score request comes in, retrieve the pre-computed features from Redis based on the transaction ID. Feed these richer features to the ML model for scoring.
+
+Note: You might need to retrain your model in Colab (notebooks/training/02_rf_training_paysim.ipynb) using a dataset with similar features to what Flink will produce.
+
+Phase 4: Monitoring & Alerts 🚨
+Goal: Gain operational visibility and establish real-time alerting mechanisms.
+
+Prometheus & Grafana Setup:
+
+Action: Ensure Prometheus and Grafana are included in your docker-compose.yaml.
+
+Activity: Configure Prometheus to scrape metrics from Kafka (using JMX Exporter), FastAPI (using FastAPI's Prometheus integration), and Flink.
+
+Grafana Dashboards: Create dashboards to visualize:
+
+Kafka ingest rates and consumer lag.
+
+FastAPI request rates, latency (p50/p95/p99), and error rates.
+
+Flink metrics (backpressure, checkpointing, taskmanager health).
+
+Basic fraud rate from alerts.
+
+Kafka Alert Topic:
+
+Action: Define a fraud_alerts Kafka topic (if not already done).
+
+Activity: Modify the FastAPI model serving service to publish high-risk events (above a defined threshold) as detailed alert messages to the fraud_alerts Kafka topic.
+
+Alert & Action Layer (src/alert_action/alert_consumer.py):
+
+Action: Create a dedicated Python Kafka consumer.
+
+Activity: Consume messages from the fraud_alerts topic. Parse the alerts and dispatch notifications to Slack via webhooks.
+
+Explainability: Incorporate SHAP (for tabular models) in your FastAPI service. When a high-risk alert is generated, include SHAP-derived feature contributions in the alert message for the analyst.
+
+Test: Trigger high-risk transactions and verify alerts appear on Grafana dashboards and in Slack.
+
+Phase 5: Full MLOps 🔄
+Goal: Implement robust MLOps practices for model lifecycle management, data quality, and drift detection.
+
+MLflow for Experiment Tracking & Registry:
+
+Action: Add MLflow tracking server to docker-compose.yaml (or use a simple file-based backend to start).
+
+Activity:
+
+Modify all Colab training notebooks (notebooks/training/) to log parameters, metrics (AUPRC, precision, recall), and artifacts (trained models, plots) to MLflow.
+
+Utilize MLflow's Model Registry to register and version trained models after successful evaluation.
+
+DVC for Data Versioning:
+
+Action: Initialize DVC in your project (dvc init).
+
+Activity: Use DVC to version your datasets (data/raw/, data/processed/) and models (src/model_serving/models/). This ensures reproducibility of your experiments.
+
+Great Expectations for Data Quality:
+
+Action: Set up Great Expectations (mlops/data_validation/).
+
+Activity: Define expectations for the schema and content of your Kafka transactions data (e.g., user_id not null, amount positive). Implement a Python script or Flink job to run these checks periodically on sampled data or during ingestion.
+
+Evidently AI for Drift Detection:
+
+Action: Set up Evidently AI (mlops/model_drift/).
+
+Activity: Regularly collect samples of features consumed by your model serving API (from Redis or a Kafka topic). Compare these production feature distributions against your training data. Generate Evidently AI drift reports (feature drift, target drift, Prediction Shift Index - PSI) to identify when models might need retraining due to data shifts.
+
+Alerting: Integrate drift alerts (e.g., via Slack) if defined thresholds are breached.
+
+Automated Retraining & Deployment (Conceptual/Future):
+
+Activity: While primarily manual for an MVP, this phase lays the groundwork for:
+
+Triggering model retraining based on drift alerts or a schedule.
+
+Promoting new model versions in MLflow.
+
+Automating model deployment to the FastAPI service.
+
+Final To-Do List ✅
+This list summarizes the concrete tasks, building on your phased plan.
+
+Development Environment Setup:
+
+[ ] Install Docker Desktop on your machine.
+
+[ ] Install VS Code with recommended extensions (Docker, Python, Remote - Containers).
+
+[ ] Ensure JDK 17 is installed and JAVA_HOME is configured on your machine for PyFlink compatibility.
+
+[ ] Create the sentinelstream/ project directory with the proposed updated folder structure.
+
+[ ] Initialize Poetry/pip-tools within relevant src/ subdirectories.
+
+Phase 1: Ingestion & Basic Pipeline:
+
+[ ] Create docker-compose.yaml for Kafka, Zookeeper, Schema Registry, Redis (minimal), Prometheus, Grafana.
+
+[ ] Define Avro/Protobuf schema for transactions in src/stream_ingestion/schemas/.
+
+[ ] Implement src/stream_ingestion/producer.py to simulate PaySim data into transactions Kafka topic.
+
+[ ] Implement src/rule_engine/simple_consumer.py for basic rule-based fraud detection (console logging).
+
+[ ] Configure basic Grafana dashboards for Kafka ingest rate.
+
+Phase 2: ML Model Serving:
+
+[ ] Train baseline Logistic Regression/Random Forest model on Kaggle ULB in notebooks/training/01_baseline_training.ipynb.
+
+[ ] Save trained model (.pkl or .onnx) to src/model_serving/models/.
+
+[ ] Implement src/model_serving/api.py (FastAPI) to load model and expose /score endpoint.
+
+[ ] Add Dockerfile for FastAPI and integrate into docker-compose.yaml.
+
+[ ] Update src/rule_engine/consumer_with_api.py to call the FastAPI /score endpoint.
+
+Phase 3: Real-Time Features:
+
+[ ] Download MaxMind GeoLite2 data and create a method to make it accessible (e.g., loaded into Redis or directly used by Flink).
+
+[ ] Implement src/stream_processing/flink_job.py (PyFlink) for real-time feature computation (velocity, geo-anomalies) and store features in Redis.
+
+[ ] Add Flink service to docker-compose.yaml.
+
+[ ] Retrain model in notebooks/training/02_rf_training_paysim.ipynb using features aligned with Flink's output.
+
+[ ] Update src/model_serving/api.py to retrieve Flink-computed features from Redis before inference.
+
+Phase 4: Monitoring & Alerts:
+
+[ ] Refine Prometheus configuration to scrape FastAPI and Flink metrics.
+
+[ ] Enhance Grafana dashboards with API latency, Flink backpressure, and more detailed KPIs.
+
+[ ] Modify src/model_serving/api.py to publish high-risk transaction alerts to fraud_alerts Kafka topic.
+
+[ ] Implement src/alert_action/alert_consumer.py to consume fraud_alerts and send Slack notifications.
+
+[ ] Integrate SHAP into src/model_serving/api.py to include explainability in alerts.
+
+Phase 5: Full MLOps:
+
+[ ] Set up MLflow tracking server (local or Dockerized) and integrate into notebooks/training/ for experiment logging and model registration.
+
+[ ] Initialize DVC in the project and version datasets (data/raw/, data/processed/).
+
+[ ] Set up Great Expectations in mlops/data_validation/ for data quality checks on Kafka transactions.
+
+[ ] Set up Evidently AI in mlops/model_drift/ for data and model drift detection and reporting.
