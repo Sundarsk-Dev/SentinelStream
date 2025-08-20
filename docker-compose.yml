@@ -1,6 +1,5 @@
-# docker-compose.yaml
-
-version: '3.7'
+# Version must be 3.8 or higher to use depends_on with condition
+version: '3.8'
 
 services:
   zookeeper:
@@ -24,11 +23,12 @@ services:
       - "29092:29092"
     environment:
       KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092'
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
 
   schema-registry:
     image: confluentinc/cp-schema-registry:7.6.1
@@ -40,7 +40,8 @@ services:
       - "8081:8081"
     environment:
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
-      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: broker:29092
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'broker:29092'
+      SCHEMA_REGISTRY_LISTENERS: "http://0.0.0.0:8081"
 
   redis:
     image: redis:6.2-alpine
@@ -49,7 +50,6 @@ services:
     ports:
       - "6379:6379"
 
-  # New service for the FastAPI model serving API
   model-serving:
     build:
       context: .
@@ -61,10 +61,36 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      # Mount the model serving code and models
       - ./src/model_serving:/app
-      # Mount the stream ingestion code to access the schema file
       - ./src/stream_ingestion:/app/stream_ingestion
     environment:
       - PYTHONUNBUFFERED=1
 
+  producer:
+    build:
+      context: .
+      dockerfile: ./src/stream_ingestion/Dockerfile
+    container_name: producer
+    hostname: producer
+    depends_on:
+      - broker
+      - schema-registry
+    volumes:
+      - ./src/stream_ingestion:/app
+      - ./schemas:/app/schemas
+    entrypoint: [ "tail", "-f", "/dev/null" ]
+
+  rule-engine:
+    build:
+      context: .
+      dockerfile: ./src/stream_ingestion/Dockerfile
+    container_name: rule-engine
+    hostname: rule-engine
+    depends_on:
+      - broker
+      - schema-registry
+      - model-serving
+    volumes:
+      - ./src:/app/src
+      - ./schemas:/app/schemas
+    entrypoint: [ "tail", "-f", "/dev/null" ]
