@@ -1,0 +1,27 @@
+{
+  "namespace": "io.fraud.avro",
+  "type": "record",
+  "name": "Transaction",
+  "fields": [
+    {
+      "name": "transaction_id",
+      "type": "string"
+    },
+    {
+      "name": "user_id",
+      "type": "string"
+    },
+    {
+      "name": "amount",
+      "type": "float"
+    },
+    {
+      "name": "location",
+      "type": "string"
+    },
+    {
+      "name": "timestamp",
+      "type": "long"
+    }
+  ]
+}

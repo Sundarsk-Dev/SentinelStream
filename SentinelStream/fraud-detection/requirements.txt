@@ -1,0 +1,12 @@
+fastapi==0.111.0
+uvicorn==0.30.1
+confluent-kafka==2.4.0
+confluent-kafka[avro]==2.4.0
+requests==2.32.3
+pandas==2.2.2
+scikit-learn==1.5.0
+tensorflow==2.16.1
+pydantic==2.7.4
+apache-flink==1.18.0
+redis
+kafka-python
