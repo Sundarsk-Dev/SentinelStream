@@ -8,3 +8,19 @@ Real-Time Feature Engineering (PyFlink Job) 📊: We created a fundamental Apach
 Real-Time Feature Caching (Redis) 💾: The PyFlink job is configured to write the computed velocity features to a Redis in-memory database. This step is crucial for enabling low-latency lookups of real-time features.
 
 Real-Time Model Serving API (FastAPI) 🚀: We developed a FastAPI application (api.py) that serves your machine learning model. This API is not only capable of making predictions but is also integrated with Redis. Before making a prediction, it retrieves the real-time velocity feature from Redis and combines it with the incoming transaction data, enabling your model to use the most up-to-date features.
+
+Credit Card Fraud Detection Model 🤖: We have established a foundational component for the project: the machine learning model for credit card fraud detection. The project plan specified training a model (e.g., Logistic Regression or Random Forest) and serializing it for use in the API. While we didn't train it directly, the api.py code we developed is designed to load and utilize such a pre-trained model (fraud_model.pkl), with a corresponding scaler.pkl to handle data preprocessing.
+
+Full Dockerized Pipeline 🐳: We successfully designed and configured a complete, multi-container Docker environment using docker-compose.yml. This pipeline includes:
+
+Data Ingestion: A Kafka Producer container to generate and send transaction data.
+
+Data Streaming: Core Kafka and Zookeeper services for message queuing.
+
+Feature Caching: A Redis container for real-time data storage.
+
+Stream Processing: An Apache Flink job manager container to handle real-time feature computation.
+
+Model Serving: A FastAPI container to host the ML model and serve predictions.
+
+Real-Time Feature Engineering 📊: We created a fundamental Apache Flink job (flink_job.py) that reads the stream of transactions from Kafka. This job performs real-time feature computation, specifically calculating a velocity feature (the total transaction amount for a user over a short time window).
