@@ -1,4 +1,4 @@
-mplemented Project Components
+mplemented Project Components so far
 Project Structure & Dockerization 📂: We successfully defined and used a standardized project folder structure. We also established a docker-compose.yml file to orchestrate multiple services, including Kafka, Zookeeper, Redis, a FastAPI server, and a PyFlink job manager. This created a reproducible and portable development environment.
 
 Data Ingestion Pipeline (Kafka Producer) ⚙️: We developed the core data ingestion script (producer.py) that generates synthetic transaction data. This script is capable of sending these transactions as messages to a Kafka topic, acting as the starting point of your real-time data pipeline.
