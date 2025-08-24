@@ -11,8 +11,6 @@ Real-Time Model Serving API (FastAPI) 🚀: We developed a FastAPI application (
 
 Credit Card Fraud Detection Model 🤖: We have established a foundational component for the project: the machine learning model for credit card fraud detection. The project plan specified training a model (e.g., Logistic Regression or Random Forest) and serializing it for use in the API. While we didn't train it directly, the api.py code we developed is designed to load and utilize such a pre-trained model (fraud_model.pkl), with a corresponding scaler.pkl to handle data preprocessing.
 
-Full Dockerized Pipeline 🐳: We successfully designed and configured a complete, multi-container Docker environment using docker-compose.yml. This pipeline includes:
-
 Data Ingestion: A Kafka Producer container to generate and send transaction data.
 
 Data Streaming: Core Kafka and Zookeeper services for message queuing.
