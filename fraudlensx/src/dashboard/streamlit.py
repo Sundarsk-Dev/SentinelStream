@@ -14,5 +14,4 @@ if st.button("Run Sample Prediction"):
 
     resp = requests.post(API_URL, json={"features": sample})
     result = resp.json()
-
     st.json(result)
