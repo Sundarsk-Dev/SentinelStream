@@ -5,7 +5,6 @@ MVP Consumer stub:
 """
 import os, json, requests, time
 from kafka import KafkaConsumer
-
 API_URL = os.getenv("API_URL", "http://127.0.0.1:8000")
 BROKER = os.getenv("KAFKA_BROKER", "localhost:9092")
 TOPIC = os.getenv("KAFKA_TOPIC", "transactions")
@@ -30,3 +29,4 @@ def run():
 
 if __name__ == "__main__":
     run()
+
