@@ -5,7 +5,6 @@ MVP Producer:
 """
 import os, time, random, uuid, json
 import requests
-
 DIRECT_API_MODE = True
 API_URL = os.getenv("API_URL", "http://127.0.0.1:8000")
 
@@ -54,3 +53,4 @@ if __name__ == "__main__":
         run_direct_api()
     else:
         run_kafka()
+
